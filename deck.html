@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>公路隧道智能计算助手研发 · 项目进度汇报</title>
+<style>
+:root {
+  --navy:#0f2461; --navy2:#16307d; --blue:#1a56db; --blue-l:#3b82f6; --blue-xl:#93c5fd;
+  --orange:#ff6b35; --amber:#f59e0b; --green:#059669; --red:#dc2626;
+  --ink:#1e293b; --ink2:#475569; --ink3:#64748b;
+  --bg:#f1f5f9; --card:#ffffff; --line:#e2e8f0;
+  --shadow:0 10px 30px -8px rgba(15,36,97,.18);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { height:100%; background:#0b1739; overflow:hidden;
+  font-family:"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; }
+
+/* ===== 舞台(16:9 缩放) ===== */
+#viewport { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; }
+#stage { width:1280px; height:720px; position:relative; transform-origin:center center;
+  box-shadow:0 30px 80px rgba(0,0,0,.5); border-radius:6px; overflow:hidden; background:var(--card); }
+
+.slide { position:absolute; inset:0; padding:56px 72px 48px; display:none; background:var(--card); }
+.slide.active { display:block; }
+
+/* ===== 通用文字 ===== */
+.kicker { font-size:15px; font-weight:700; letter-spacing:4px; color:var(--blue); margin-bottom:10px; }
+.kicker::before { content:""; display:inline-block; width:26px; height:3px; background:var(--orange);
+  border-radius:2px; margin-right:12px; vertical-align:middle; }
+h2.title { font-size:38px; color:var(--ink); letter-spacing:1px; margin-bottom:6px; }
+.subtitle { font-size:16px; color:var(--ink3); margin-bottom:26px; }
+.foot { position:absolute; left:72px; right:72px; bottom:20px; display:flex; justify-content:space-between;
+  font-size:12px; color:#94a3b8; letter-spacing:1px; border-top:1px solid var(--line); padding-top:10px; }
+
+/* ===== 封面/结束 ===== */
+.cover { background:linear-gradient(128deg,#0a1533 0%,var(--navy) 42%,var(--navy2) 72%,#1d4398 100%);
+  display:none; color:#fff; padding:0; }
+.cover.active { display:block; }
+.cover .deco { position:absolute; inset:0; overflow:hidden; }
+.cover .ring { position:absolute; border-radius:50%; border:1px solid rgba(147,197,253,.22); }
+.cover .r1 { width:820px; height:820px; right:-260px; top:-320px; }
+.cover .r2 { width:560px; height:560px; right:-130px; top:-190px; border-color:rgba(147,197,253,.3); }
+.cover .r3 { width:300px; height:300px; left:-110px; bottom:-130px; border-color:rgba(255,107,53,.35); }
+.cover .grid { position:absolute; inset:0;
+  background-image:linear-gradient(rgba(147,197,253,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(147,197,253,.06) 1px,transparent 1px);
+  background-size:64px 64px; }
+.cover .inner { position:relative; height:100%; display:flex; flex-direction:column; justify-content:center; padding:0 110px; }
+.cover .org { font-size:16px; letter-spacing:6px; color:var(--blue-xl); margin-bottom:26px; font-weight:600; }
+.cover .tagchip { display:inline-flex; align-items:center; gap:8px; align-self:flex-start;
+  background:rgba(255,107,53,.14); border:1px solid rgba(255,107,53,.45); color:#ffb08a;
+  font-size:14px; padding:6px 16px; border-radius:20px; letter-spacing:2px; margin-bottom:30px; }
+.cover h1 { font-size:60px; letter-spacing:2px; line-height:1.25; margin-bottom:14px; text-shadow:0 4px 24px rgba(0,0,0,.35); }
+.cover .sub { font-size:26px; color:#bfdbfe; letter-spacing:10px; margin-bottom:56px; }
+.cover .meta { display:flex; gap:44px; font-size:16px; color:#dbeafe; }
+.cover .meta b { color:#fff; font-size:20px; display:block; margin-bottom:4px; }
+.cover .glow { position:absolute; width:520px; height:520px; border-radius:50%;
+  background:radial-gradient(circle,rgba(59,130,246,.35),transparent 65%); right:-80px; bottom:-140px; }
+
+/* ===== 目录 ===== */
+.toc { display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:14px; }
+.toc-item { display:flex; gap:18px; align-items:flex-start; background:linear-gradient(135deg,#f8fafc,#eef4ff);
+  border:1px solid var(--line); border-radius:14px; padding:26px 26px; box-shadow:var(--shadow); }
+.toc-num { font-size:40px; font-weight:800; color:transparent; -webkit-text-stroke:1.6px var(--blue); line-height:1; }
+.toc-item h3 { font-size:21px; color:var(--ink); margin-bottom:6px; }
+.toc-item p { font-size:14px; color:var(--ink3); line-height:1.7; }
+
+/* ===== 卡片与数据 ===== */
+.stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:20px; }
+.stat { background:linear-gradient(160deg,#f8faff,#eef3fd); border:1px solid var(--line); border-radius:14px;
+  padding:20px 22px; box-shadow:var(--shadow); }
+.stat .v { font-size:34px; font-weight:800; color:var(--blue); line-height:1.15; }
+.stat .v small { font-size:15px; font-weight:600; color:var(--ink3); margin-left:2px; }
+.stat .k { font-size:13.5px; color:var(--ink2); margin-top:6px; }
+.stat.warn .v { color:var(--orange); }
+.cards2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.cards3 { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.cards4 { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; box-shadow:var(--shadow); }
+.card h3 { font-size:17px; color:var(--ink); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.card h3 .ico { font-size:20px; }
+.card p, .card li { font-size:13.5px; color:var(--ink2); line-height:1.85; }
+.card ul { padding-left:18px; }
+.card .hl { color:var(--blue); font-weight:700; }
+.card .big { font-size:22px; font-weight:800; color:var(--blue); }
+.note-strip { background:#fffbeb; border:1px dashed var(--amber); border-radius:10px; padding:12px 18px;
+  font-size:13.5px; color:#92400e; line-height:1.8; }
+
+/* ===== 架构图 ===== */
+.arch { display:flex; flex-direction:column; gap:10px; margin:6px 0 14px; }
+.arch .layer { display:flex; align-items:center; gap:16px; border-radius:12px; padding:13px 22px; color:#fff; }
+.arch .layer b { font-size:16.5px; letter-spacing:1px; white-space:nowrap; }
+.arch .layer span { font-size:12.5px; opacity:.85; }
+.arch .l1 { background:linear-gradient(90deg,#1d4ed8,#3b82f6); }
+.arch .l2 { background:linear-gradient(90deg,#1e40af,#2563eb); }
+.arch .l3 { background:linear-gradient(90deg,#16307d,#1d4398); }
+.arch .l4 { background:linear-gradient(90deg,#0f2461,#16307d); }
+.arch .arrow { text-align:center; color:#94a3b8; font-size:14px; line-height:.6; }
+
+/* ===== 模块 chips ===== */
+.chip-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.chip { background:#f8faff; border:1px solid #dbe7fb; border-radius:10px; padding:11px 12px; text-align:center;
+  font-size:13.5px; color:var(--ink); font-weight:600; }
+.chip.new { background:linear-gradient(135deg,#fff3ec,#ffe8db); border-color:#fdba9a; color:#9a3412; }
+.chip-group-label { font-size:12.5px; font-weight:700; color:var(--ink3); letter-spacing:2px; margin:10px 0 6px; }
+
+/* ===== 表格 ===== */
+table.tb { width:100%; border-collapse:collapse; font-size:14px; }
+.tb th { background:#eef4ff; color:#1e40af; font-weight:700; padding:10px 12px; text-align:left; border-bottom:2px solid #c7d9f5; }
+.tb td { padding:9px 12px; border-bottom:1px solid var(--line); color:var(--ink2); }
+.tb tr td:first-child { color:var(--ink); font-weight:600; }
+.tb .ok { color:var(--green); font-weight:700; }
+.tb .num { font-variant-numeric:tabular-nums; }
+
+/* ===== 时间轴 ===== */
+.timeline { display:flex; margin:30px 0 8px; position:relative; }
+.timeline::before { content:""; position:absolute; left:3%; right:3%; top:13px; height:4px;
+  background:linear-gradient(90deg,#bfdbfe,var(--blue)); border-radius:2px; }
+.tl-item { flex:1; text-align:center; position:relative; padding-top:34px; }
+.tl-item::before { content:""; width:16px; height:16px; border-radius:50%; background:#fff; border:4px solid var(--blue-l);
+  position:absolute; top:6px; left:50%; transform:translateX(-50%); box-shadow:0 0 0 4px rgba(59,130,246,.15); }
+.tl-item.done::before { background:var(--blue); border-color:var(--blue); }
+.tl-item.now::before { background:var(--orange); border-color:var(--orange); box-shadow:0 0 0 5px rgba(255,107,53,.2); }
+.tl-item .t { font-size:13px; color:var(--ink3); font-weight:700; letter-spacing:1px; }
+.tl-item .d { font-size:13px; color:var(--ink2); margin-top:5px; line-height:1.55; padding:0 6px; }
+.tl-item.now .t { color:var(--orange); }
+.tl-badge { display:inline-block; margin-top:6px; font-size:11px; font-weight:700; padding:2px 10px; border-radius:10px; }
+.b-done { background:#dcfce7; color:#15803d; }
+.b-now { background:#ffedd5; color:#c2410c; }
+
+/* ===== 进度条 ===== */
+.pbar { background:#e2e8f0; border-radius:8px; height:12px; overflow:hidden; }
+.pbar > i { display:block; height:100%; border-radius:8px; background:linear-gradient(90deg,var(--blue),var(--blue-l)); }
+.prow { margin-bottom:14px; }
+.prow .pl { display:flex; justify-content:space-between; font-size:13.5px; color:var(--ink2); margin-bottom:5px; }
+.prow .pl b { color:var(--ink); }
+
+/* ===== 大数字困难页 ===== */
+.diff-hero { display:flex; gap:20px; align-items:stretch; margin-bottom:18px; }
+.diff-num { flex:0 0 300px; background:linear-gradient(150deg,var(--navy),#1d4398); border-radius:16px; color:#fff;
+  display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; }
+.diff-num .n { font-size:58px; font-weight:800; line-height:1; }
+.diff-num .n small { font-size:20px; font-weight:600; opacity:.8; }
+.diff-num .d { font-size:14px; color:#bfdbfe; margin-top:10px; letter-spacing:1px; }
+
+/* ===== 请求卡 ===== */
+.ask { border-left:5px solid var(--blue); background:linear-gradient(135deg,#f8faff,#f1f6ff);
+  border-radius:0 14px 14px 0; padding:20px 24px; box-shadow:var(--shadow); margin-bottom:16px; }
+.ask h3 { font-size:18px; color:var(--ink); margin-bottom:8px; }
+.ask h3 .no { display:inline-flex; width:30px; height:30px; border-radius:50%; background:var(--blue); color:#fff;
+  align-items:center; justify-content:center; font-size:15px; margin-right:10px; vertical-align:-6px; }
+.ask p { font-size:14px; color:var(--ink2); line-height:1.85; }
+.ask p b { color:var(--blue); }
+
+/* ===== 结束页 ===== */
+.end { background:linear-gradient(128deg,#0a1533,var(--navy) 55%,#1d4398); color:#fff; display:none; padding:0; }
+.end.active { display:block; }
+.end .inner { height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; position:relative; }
+.end h1 { font-size:48px; letter-spacing:6px; margin-bottom:22px; }
+.end p { font-size:18px; color:#bfdbfe; letter-spacing:3px; line-height:2.1; }
+.end .slogan { margin-top:44px; font-size:15px; color:#93c5fd; letter-spacing:5px;
+  border:1px solid rgba(147,197,253,.4); padding:10px 30px; border-radius:30px; }
+
+/* ===== 动效 ===== */
+.rv { opacity:0; transform:translateY(16px); }
+.slide.active .rv, .cover.active .rv, .end.active .rv { animation:rv .55s cubic-bezier(.2,.7,.3,1) forwards; }
+.slide.active .rv:nth-child(1), .cover.active .rv:nth-child(1) { animation-delay:.05s; }
+.slide.active .rv:nth-child(2) { animation-delay:.14s; } .slide.active .rv:nth-child(3) { animation-delay:.22s; }
+.slide.active .rv:nth-child(4) { animation-delay:.3s; } .slide.active .rv:nth-child(5) { animation-delay:.38s; }
+.slide.active .rv:nth-child(6) { animation-delay:.46s; } .slide.active .rv:nth-child(7) { animation-delay:.54s; }
+@keyframes rv { to { opacity:1; transform:none; } }
+
+/* ===== HUD ===== */
+#hud { position:fixed; right:22px; bottom:18px; display:flex; align-items:center; gap:10px; z-index:60;
+  font-size:13px; color:#cbd5e1; user-select:none; }
+#hud button { width:34px; height:34px; border-radius:50%; border:1px solid rgba(203,213,225,.35);
+  background:rgba(15,36,97,.55); color:#e2e8f0; font-size:15px; cursor:pointer; backdrop-filter:blur(4px); }
+#hud button:hover { background:var(--blue); }
+#counter { min-width:56px; text-align:center; font-variant-numeric:tabular-nums; letter-spacing:1px; }
+#progress { position:fixed; left:0; bottom:0; height:4px; background:linear-gradient(90deg,var(--orange),var(--blue-l));
+  width:0; z-index:70; transition:width .3s; }
+#helpTip { position:fixed; left:22px; bottom:18px; z-index:60; font-size:12px; color:rgba(203,213,225,.65); letter-spacing:1px; }
+
+/* ===== 口播备注面板 ===== */
+#notes { position:fixed; left:0; right:0; bottom:0; max-height:34vh; overflow:auto; z-index:80;
+  background:rgba(10,21,51,.92); color:#e2e8f0; padding:20px 36px 24px; backdrop-filter:blur(8px);
+  border-top:2px solid var(--blue-l); display:none; }
+#notes.show { display:block; }
+#notes .nt { font-size:12px; letter-spacing:2px; color:#93c5fd; margin-bottom:8px; }
+#notes .nx { font-size:15.5px; line-height:2.05; letter-spacing:.5px; }
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- ========== 1 封面 ========== -->
+<section class="slide cover">
+  <div class="deco"><div class="grid"></div><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="glow"></div></div>
+  <div class="inner">
+    <div class="org rv">浙江数智交院科技股份有限公司 · 交通市政四分院</div>
+    <div class="tagchip rv">&#9679; 院 AI 科研项目 · 序号 8</div>
+    <h1 class="rv">公路隧道智能计算助手研发</h1>
+    <div class="sub rv">项 目 进 度 汇 报</div>
+    <div class="meta rv">
+      <div><b>汇报人</b>黄聪 · 交通市政四分院</div>
+      <div><b>汇报时间</b>2026 年 11 月</div>
+      <div><b>项目周期</b>2026.6 — 2026.12</div>
+      <div><b>总经费</b>119.928 万元</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2 提纲 ========== -->
+<section class="slide">
+  <div class="kicker rv">CONTENTS</div>
+  <h2 class="title rv">汇报提纲</h2>
+  <div class="subtitle rv">四个部分 · 约 20 分钟</div>
+  <div class="toc">
+    <div class="toc-item rv"><div class="toc-num">01</div><div><h3>项目概况</h3><p>立项背景 · 建设目标 · 总体架构与 12 个计算模块</p></div></div>
+    <div class="toc-item rv"><div class="toc-num">02</div><div><h3>研发进度与成果</h3><p>两大新模块 · 计算书校核 · 界面优化 · 规范条文库 · AI 助手</p></div></div>
+    <div class="toc-item rv"><div class="toc-num">03</div><div><h3>存在的问题与困难</h3><p>资料缺口 · 立项材料事项 · <b style="color:var(--orange)">经费使用口径</b> · <b style="color:var(--orange)">研发时间保障</b></p></div></div>
+    <div class="toc-item rv"><div class="toc-num">04</div><div><h3>下一步计划与请求</h3><p>11-12 月安排 · 交付物清单 · 三项请求事项</p></div></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>02 / 20</span></div>
+</section>
+
+<!-- ========== 3 项目概况 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 01 · 项目概况</div>
+  <h2 class="title rv">立项基本信息</h2>
+  <div class="subtitle rv">院 AI 科研项目 · 技术域分组:设计工具</div>
+  <div class="stat-grid">
+    <div class="stat rv"><div class="v">119.928<small>万元</small></div><div class="k">项目总经费(以工作大纲为准)</div></div>
+    <div class="stat rv"><div class="v">2026.6-12</div><div class="k">项目周期 · 五个阶段</div></div>
+    <div class="stat rv"><div class="v">4<small>人</small> / 280<small>工日</small></div><div class="k">项目组(黄聪/周煜程/高恩全/沈旭东)</div></div>
+    <div class="stat rv"><div class="v">12<small>个</small></div><div class="k">计算模块(山岭8+边坡排水2+明挖1+盾构1)</div></div>
+  </div>
+  <div class="card rv">
+    <h3><span class="ico">&#127919;</span>一句话定位</h3>
+    <p>面向公路隧道设计,把<span class="hl">规范条文结构化入库</span> + <span class="hl">大模型规范问答</span> + <span class="hl">参数驱动自动计算</span>,
+    做一个"会算、会查、会答"的智能计算工具,让设计师把时间还给方案本身。</p>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>03 / 20</span></div>
+</section>
+
+<!-- ========== 4 总体架构 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 01 · 项目概况</div>
+  <h2 class="title rv">总体架构与建设内容</h2>
+  <div class="subtitle rv">四层技术架构 · 对应立项书四大研究主题</div>
+  <div class="arch rv">
+    <div class="layer l1"><b>&#129302; 智能体层</b><span>自然语言对话 · 调用计算与检索 · 结果解读与预警</span></div>
+    <div class="arrow">&#9650;&nbsp;&nbsp;&#9660;</div>
+    <div class="layer l2"><b>&#128268; MCP 服务层</b><span>计算能力/条文检索封装为标准接口,四层解耦</span></div>
+    <div class="arrow">&#9650;&nbsp;&nbsp;&#9660;</div>
+    <div class="layer l3"><b>&#129518; 计算引擎层</b><span>12 个计算模块 · 每个公式有规范出处 · 结果可追溯</span></div>
+    <div class="arrow">&#9650;&nbsp;&nbsp;&#9660;</div>
+    <div class="layer l4"><b>&#128218; 知识库层</b><span>规范条文结构化 · 后续规范接入 · 院内资产复用</span></div>
+  </div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#128270;</span>AI 问答式规范检索</h3><p>条文入库、向量检索、条文-计算联动</p></div>
+    <div class="card"><h3><span class="ico">&#129518;</span>智能化计算辅助</h3><p>12 模块参数驱动,输入即算、算完即查依据</p></div>
+    <div class="card"><h3><span class="ico">&#127758;</span>知识库扩展通道</h3><p>新规范持续接入,院内既有成果复用</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>04 / 20</span></div>
+</section>
+
+<!-- ========== 5 总体进度 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">总体进度:按计划推进,部分提前</h2>
+  <div class="timeline rv">
+    <div class="tl-item done"><div class="t">2026.6</div><div class="d">立项启动<br>组建团队 · 方案细化</div><span class="tl-badge b-done">&#10003; 完成</span></div>
+    <div class="tl-item done"><div class="t">2026.7-8</div><div class="d">资料收集与立项大纲<br>大纲按评审意见改稿</div><span class="tl-badge b-done">&#10003; 完成</span></div>
+    <div class="tl-item done"><div class="t">2026.9-10</div><div class="d">原型梳理<br>10 个模块跑通</div><span class="tl-badge b-done">&#10003; 完成</span></div>
+    <div class="tl-item now"><div class="t">2026.10-11</div><div class="d">V2.0 补齐明挖+盾构<br>V2.1 交互与功能升级</div><span class="tl-badge b-now">&#9679; 当前</span></div>
+    <div class="tl-item"><div class="t">2026.12</div><div class="d">联调 · 材料回填<br>考核目标对表销号</div></div>
+  </div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#128230;</span>版本演进</h3><p>初代原型(10模块) → <span class="hl">V2.0(12模块全上线)</span> → <span class="hl">V2.1(界面+条文库+导出+AI直调)</span></p></div>
+    <div class="card"><h3><span class="ico">&#128218;</span>资料到位情况</h3><p>基坑规程现行版全文、地铁/盾构规范全文、公路隧道规范 OCR、3 份真实工程计算书</p></div>
+    <div class="card"><h3><span class="ico">&#9989;</span>阶段结论</h3><p>立项书阶段一、二已按期完成,阶段三<span class="hl">提前启动并基本完成</span>,剩余盾构结构计算待荷载口径</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>05 / 20</span></div>
+</section>
+
+<!-- ========== 6 工具全景 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果一:12 模块智能计算工具</h2>
+  <div class="subtitle rv">单文件网页工具 · 免安装 · 免网络 · 拷贝即用 · 已可在手机上运行</div>
+  <div class="chip-group-label rv">山岭隧道(8)</div>
+  <div class="chip-grid rv">
+    <div class="chip">&#127969; 围岩分级(BQ)</div><div class="chip">&#128170; 荷载计算</div>
+    <div class="chip">&#128296; 配筋验算</div><div class="chip">&#127960; 洞口选型</div>
+    <div class="chip">&#128737; 衬砌参数</div><div class="chip">&#128209; 建筑限界</div>
+    <div class="chip">&#128167; 防排水设计</div><div class="chip">&#128652; 辅助通道</div>
+  </div>
+  <div class="chip-group-label rv">边坡与排水(2)</div>
+  <div class="chip-grid rv">
+    <div class="chip">&#127754; 汇水排水</div><div class="chip">&#9968; 边仰坡工程量</div>
+    <div class="chip" style="visibility:hidden"></div><div class="chip" style="visibility:hidden"></div>
+  </div>
+  <div class="chip-group-label rv">本期新增(2)</div>
+  <div class="chip-grid rv">
+    <div class="chip new">&#9935; 明挖隧道围护与主体结构</div><div class="chip new">&#128647; 盾构隧道结构与管片排版</div>
+    <div class="chip" style="visibility:hidden"></div><div class="chip" style="visibility:hidden"></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>06 / 20</span></div>
+</section>
+
+<!-- ========== 7 明挖模块 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果二:明挖隧道模块(本期新增)</h2>
+  <div class="subtitle rv">依据 JGJ 120-2012 / DB33/T 1096-2014 / GB 50010 / GB 50017 · 依托鲁家峙工程校核</div>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#128204;</span>11-A 支护选型</h3><ul>
+      <li>基坑等级自动判定(一/二/三级)</li><li>围护形式+支撑道数推荐(10 断面工程类比)</li><li>嵌固深度、七类支护构造对照表</li></ul></div>
+    <div class="card"><h3><span class="ico">&#9889;</span>11-B 侧压力计算</h3><ul>
+      <li>朗肯主动/被动/静止土压力,水土分算/合算</li><li>内置依托工程 <span class="hl">9 个土层参数库</span>,一键回填</li><li>压力分布图自动绘制</li></ul></div>
+    <div class="card"><h3><span class="ico">&#128737;</span>11-C 稳定性验算(六项)</h3><ul>
+      <li>墙底抗隆起 · 抗倾覆 · 整体稳定(滑弧自动搜索)</li><li>抗渗流 · 抗承压水 · 嵌固构造</li><li>每项红绿判定 + 安全系数限值表</li></ul></div>
+    <div class="card"><h3><span class="ico">&#128295;</span>11-D 构件与主体结构(七种)</h3><ul>
+      <li>地连墙配筋 · 冠梁围檩 · 砼支撑 · 钢支撑 · 焊缝</li><li>主体板墙配筋+<span class="hl">裂缝宽度迭代</span></li><li>结构抗浮验算</li></ul></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>07 / 20</span></div>
+</section>
+
+<!-- ========== 8 盾构模块 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果三:盾构隧道模块</h2>
+  <div class="subtitle rv">12-A 已开放 · 12-B 复用明挖方法 · 12-C 框架就绪,待公路盾构荷载取值</div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#9851;</span>12-A 管片排版 &#10003;</h3><ul>
+      <li>分块角度/弧长/楔形量/错缝角自动计算</li><li>双环错缝拼装示意图</li><li><span class="hl">GB 50157 符合性校核</span>:环宽、厚度比(0.040~0.060D)、分块数、抗渗 P10</li></ul></div>
+    <div class="card"><h3><span class="ico">&#128736;</span>12-B 工作井 &#10003;</h3><ul>
+      <li>与明挖基坑方法一致,一键跳转</li><li>工作井参数预设(22.9m / 1200 地连墙 / 4砼+1钢)</li><li>环框梁/过梁校核样本数据</li></ul></div>
+    <div class="card"><h3><span class="ico">&#128667;</span>12-C 主体结构 &#9203;</h3><ul>
+      <li>计算模型框架:自由圆环法/修正惯用法/梁弹簧</li><li>荷载输入区、验算项清单已搭好</li><li class="hl">公路盾构荷载取值未到位,不编公式</li></ul></div>
+  </div>
+  <div class="note-strip rv">&#9888; 原则:规范没到位的内容宁可留白也不编造——这是工程软件的底线,也是评审时经得起追问的底气。</div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>08 / 20</span></div>
+</section>
+
+<!-- ========== 9 可靠性 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果四:计算可靠性 — 用真实计算书校核</h2>
+  <div class="subtitle rv">校核样本:鲁家峙隧道施工图计算书(2017)· 52 项单元测试 + 34 项端到端测试,全部通过</div>
+  <div class="cards2 rv" style="grid-template-columns:1.35fr 1fr;">
+    <div class="card" style="padding:14px 18px;">
+      <table class="tb">
+        <tr><th>校核项</th><th>计算书</th><th>本工具</th><th>偏差</th></tr>
+        <tr><td>冠梁弯矩 (kN·m)</td><td class="num">11214</td><td class="num">11214</td><td class="ok">精确一致</td></tr>
+        <tr><td>砼支撑轴力 (kN)</td><td class="num">3665</td><td class="num">3665</td><td class="ok">精确一致</td></tr>
+        <tr><td>焊缝应力 (N/mm&sup2;)</td><td class="num">92.38</td><td class="num">92.40</td><td class="ok">0.02%</td></tr>
+        <tr><td>抗浮安全系数</td><td class="num">1.42</td><td class="num">1.42</td><td class="ok">精确一致</td></tr>
+        <tr><td>钢支撑长细比 &lambda;</td><td class="num">66.75</td><td class="num">66.80</td><td class="ok">0.1%</td></tr>
+        <tr><td>稳定系数 &phi;(b类)</td><td class="num">0.77</td><td class="num">0.77</td><td class="ok">精确一致</td></tr>
+        <tr><td>墙底抗隆起 Kb(工作井)</td><td class="num">4.60</td><td class="num">4.53</td><td class="ok">1.5%</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="card rv" style="margin-bottom:16px;"><h3><span class="ico">&#128202;</span>十断面支护选型回归</h3>
+        <p>工作井 22.9m &rarr; 1200 地连墙+4砼1钢;5-5 段 10m &rarr; 600 地连墙;9-9 段 4.7m &rarr; &empty;600 钻孔桩……<span class="hl">10 个断面全部与实际设计吻合</span></p></div>
+      <div class="card rv"><h3><span class="ico">&#128273;</span>规范条文号核对</h3>
+        <p>模块 11 引用的基坑规程条文号,已用<b>现行版(DB33/T 1096-2014)正文</b>逐条核对一致;承载力系数经土力学文献值复核。</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>09 / 20</span></div>
+</section>
+
+<!-- ========== 10 V2.1 界面 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果五:V2.1 交互与易用性升级</h2>
+  <div class="subtitle rv">解决"模块多点不到" · 全尺寸适配 · 一键出计算书</div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#129523;</span>侧边栏导航</h3><ul>
+      <li>顶部标签 &rarr; <span class="hl">左侧分组侧边栏</span>(山岭/边坡排水/明挖/盾构)</li><li>12 个模块任何屏幕全部可见可点</li><li>手机端抽屉式菜单,自动收起</li></ul></div>
+    <div class="card"><h3><span class="ico">&#128196;</span>导出计算书</h3><ul>
+      <li>任意模块算完,一键导出<span class="hl">独立 HTML 计算书</span></li><li>含输入参数表、计算过程、图形</li><li>可直接打印归档,满足考核目标</li></ul></div>
+    <div class="card"><h3><span class="ico">&#10024;</span>视觉与适配</h3><ul>
+      <li>版本徽章、切换动画、卡片微交互</li><li>1440 / 1024 / 手机宽度全面测试</li><li>修复原型遗留的标题溢出等问题</li></ul></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>10 / 20</span></div>
+</section>
+
+<!-- ========== 11 规范条文库 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果六:规范条文库 — 点开依据,条文即达</h2>
+  <div class="subtitle rv">立项书"AI 问答式规范检索"的落点 · 全部 17 处计算依据可点击</div>
+  <div class="stat-grid rv" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat"><div class="v">26<small>条</small></div><div class="k">已收录规范条文</div></div>
+    <div class="stat"><div class="v">21<small>条</small></div><div class="k">基坑规程 DB33/T 1096-2014</div></div>
+    <div class="stat"><div class="v">3<small>部</small></div><div class="k">GB 50157 / GB 50010 / JTG 3370.1</div></div>
+    <div class="stat"><div class="v">100<small>%</small></div><div class="k">条文号与现行版正文核对</div></div>
+  </div>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#128214;</span>怎么用</h3>
+      <p>任何计算结果底部的"依据"行,点开即弹出<b>规范编号+条款号+条文原文</b>;答辩时被问"依据是什么",当场翻给评委看。</p></div>
+    <div class="card"><h3><span class="ico">&#128218;</span>持续扩容</h3>
+      <p>规程全文、地铁/盾构规范全文、公路隧道规范 OCR 文本已就位,后续按模块引用逐步扩充,并支撑向量检索。</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>11 / 20</span></div>
+</section>
+
+<!-- ========== 12 AI助手 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">成果七:AI 助手 — 从"会聊"到"会算"</h2>
+  <div class="subtitle rv">对话即计算 · 无 API 密钥时自动降级为内置规则引擎(内网可用)</div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#128172;</span>规范知识问答</h3><p>基坑支护、土压力、稳定性、内支撑、盾构等 20+ 话题,含公式表格与规范出处</p></div>
+    <div class="card"><h3><span class="ico">&#9889;</span>直调计算函数</h3><p>问"<span class="hl">IV级围岩埋深20米荷载多少</span>"&rarr; 实时算出深埋判定 + q=110.16 kN/m&sup2;;问"基坑深度15m选型" &rarr; 等级+围护形式+嵌固深度</p></div>
+    <div class="card"><h3><span class="ico">&#128064;</span>自动联动</h3><p>问答结果自动切换到对应模块继续深算;为接入院统一大模型接口预留了标准链路</p></div>
+  </div>
+  <div class="note-strip rv">&#128274; 说明:当前 AI 对话采用外部 API 直连,仅用于功能验证,<b>未接入任何院内工程数据</b>;正式部署形态(云端 API / 院内代理 / 本地部署)取决于院里算力与保密口径,见后文请求事项。</div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>12 / 20</span></div>
+</section>
+
+<!-- ========== 13 进度对照 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 02 · 研发进度与成果</div>
+  <h2 class="title rv">对照立项计划:进度与质量</h2>
+  <div class="subtitle rv">阶段三较计划提前约一个月启动</div>
+  <div style="max-width:960px;margin-top:6px;" class="rv">
+    <div class="prow"><div class="pl"><b>阶段一 · 资料收集与大纲改写</b><span>100%</span></div><div class="pbar"><i style="width:100%"></i></div></div>
+    <div class="prow"><div class="pl"><b>阶段二 · 山岭+边坡类 10 个模块</b><span>100%</span></div><div class="pbar"><i style="width:100%"></i></div></div>
+    <div class="prow"><div class="pl"><b>阶段三 · 明挖+盾构 2 个模块组</b><span>85%(12-C 待荷载口径)</span></div><div class="pbar"><i style="width:85%;background:linear-gradient(90deg,var(--blue),var(--orange))"></i></div></div>
+    <div class="prow"><div class="pl"><b>阶段四 · 联调、优化与材料回填</b><span>45%</span></div><div class="pbar"><i style="width:45%"></i></div></div>
+  </div>
+  <div class="cards3 rv" style="margin-top:14px;">
+    <div class="card"><h3><span class="ico">&#127919;</span>考核目标(8项)</h3><p>12 模块上线、规范检索、计算书导出等核心项<b>已基本达成</b>,其余按计划 12 月销号</p></div>
+    <div class="card"><h3><span class="ico">&#128736;</span>质量动作</h3><p>52 项单元测试 + 34 项端到端测试纳入每次发版,控制台零错误</p></div>
+    <div class="card"><h3><span class="ico">&#128228;</span>发版管理</h3><p>一键构建脚本 + 锚点校验,版本可复现、可回溯</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>13 / 20</span></div>
+</section>
+
+<!-- ========== 14 问题一 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 03 · 存在的问题与困难</div>
+  <h2 class="title rv">问题一:技术资料缺口</h2>
+  <div class="subtitle rv">影响范围可控,部分需院里渠道协助</div>
+  <div class="cards3 rv">
+    <div class="card"><h3><span class="ico">&#128667;</span>公路盾构荷载取值</h3><p>12-C 最后一块空白。现行参考资料为地铁设计规范口径,公路系统标准尚未取得,建议通过院里渠道向<b>手册/标准编制作单位</b>获取</p></div>
+    <div class="card"><h3><span class="ico">&#128205;</span>第二依托工程资料</h3><p>甬金衢上高速隧道段设计资料,用于<b>交叉验证</b>计算模块的适用性,丰富工程类比库</p></div>
+    <div class="card"><h3><span class="ico">&#128214;</span>规程正式版复核</h3><p>条文号已核对一致;条文<b>原文</b>目前以文本提取版为准,建议图书室借阅正式出版本做最终校对</p></div>
+  </div>
+  <div class="note-strip rv">&#128204; 上述缺口均不阻塞主线:12 月前补齐即可,当前研发按"资料到位即插入"的框架推进。</div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>14 / 20</span></div>
+</section>
+
+<!-- ========== 15 问题二 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 03 · 存在的问题与困难</div>
+  <h2 class="title rv">问题二:立项材料挂起事项</h2>
+  <div class="subtitle rv">均等待院里政策类信息,项目组无法单方面闭环</div>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#128203;</span>汇总表 P 列答复</h3><ul>
+      <li>经费报销政策 / LLM 采购政策 / 保密审查结论三项未答复</li><li>与后文两条困难直接相关</li></ul></div>
+    <div class="card"><h3><span class="ico">&#127908;</span>汇报环节确认</h3><ul>
+      <li>院里是否安排立项汇报/答辩、PPT 模板</li><li>若有,项目组随时可以汇报(本材料即可扩展)</li></ul></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>15 / 20</span></div>
+</section>
+
+<!-- ========== 16 困难一 经费 ========== -->
+<section class="slide">
+  <div class="kicker rv" style="color:var(--orange);">PART 03 · 存在的问题与困难 &#9733; 重点</div>
+  <h2 class="title rv">困难一:经费使用口径不明确</h2>
+  <div class="subtitle rv">立项至今经费零支出 —— 不是不需要花,是不敢花、不会花</div>
+  <div class="diff-hero rv">
+    <div class="diff-num"><div class="n">119.928<small>万元</small></div><div class="d">立项总经费 · 截至目前<b style="color:#ffb08a;"> 0 元支出</b></div></div>
+    <div class="card" style="flex:1;">
+      <h3><span class="ico">&#10067;</span>两个核心疑问,恳请明确</h3>
+      <ul>
+        <li><b>① 购买 AI 大模型 API(云服务订阅)</b>,能否在科研经费中列支?走哪个科目?</li>
+        <li><b>② 本地部署大模型设备(服务器/GPU 等)</b>,能否购置?如何入账(资产/费用)?</li>
+      </ul>
+      <p style="margin-top:8px;">现状:预算中可对应的仅有"出版/文献/信息传播/知识产权(含软件购置费)"<b>8 万元</b>与"其他费用"<b>5 万元</b>——AI 能力主要靠免费额度与个人碎片时间支撑,难以持续。</p>
+    </div>
+  </div>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#9889;</span>为什么急</h3><p>该口径直接决定智能体层技术路线:<b>云端 API / 院内代理 / 本地部署</b> 三选一,年底前必须定,否则影响考核目标中 AI 能力相关项。</p></div>
+    <div class="card"><h3><span class="ico">&#128274;</span>与保密的关联</h3><p>若设计数据不得出域,则必须本地部署或院内代理——<b>经费口径、算力政策、保密结论三件事实际是一件事</b>,建议一次问齐。</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>16 / 20</span></div>
+</section>
+
+<!-- ========== 17 困难二 时间 ========== -->
+<section class="slide">
+  <div class="kicker rv" style="color:var(--orange);">PART 03 · 存在的问题与困难 &#9733; 重点</div>
+  <h2 class="title rv">困难二:生产任务重,研发时间不足</h2>
+  <div class="subtitle rv">项目组 4 人均为兼职研发 · 人均每周不足 1 个研发日</div>
+  <div class="stat-grid rv">
+    <div class="stat warn"><div class="v">280<small>工日</small></div><div class="k">立项总工日(7 个月)</div></div>
+    <div class="stat warn"><div class="v">&le;1<small>天/人/周</small></div><div class="k">摊薄后的研发时间</div></div>
+    <div class="stat warn"><div class="v">100%</div><div class="k">成员同时满负荷承担生产任务</div></div>
+    <div class="stat"><div class="v">&#128295;</div><div class="k">现有成果基本靠晚间/周末碎片时间完成</div></div>
+  </div>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#9208;</span>现实情况</h3><p>四分院今年生产任务很重,研发经常被紧急生产任务打断;现有进度是项目组用碎片时间换来的。</p></div>
+    <div class="card"><h3><span class="ico">&#9888;</span>剩余硬任务</h3><p>盾构结构计算、多层土升级、全模块联调、软著材料——<b>集中在最后 6 周</b>,纯靠挤时间风险较高。</p></div>
+  </div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>17 / 20</span></div>
+</section>
+
+<!-- ========== 18 请求事项 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 04 · 下一步计划与请求</div>
+  <h2 class="title rv">三项请求事项</h2>
+  <div class="subtitle rv">前两项一趟即可问齐,不占用各部门太多时间</div>
+  <div class="ask rv"><h3><span class="no">1</span>明确经费列支口径 <span style="font-size:13px;color:var(--ink3);font-weight:400;">(财务部 + 信息部)</span></h3>
+    <p>恳请明确 <b>AI API 云服务采购</b>与<b>本地部署模型设备购置</b>在科研经费中的列支科目与流程;如需调整预算结构,项目组配合走程序。<b>目前 120 万经费零支出,正卡在此处。</b></p></div>
+  <div class="ask rv"><h3><span class="no">2</span>明确算力与保密口径 <span style="font-size:13px;color:var(--ink3);font-weight:400;">(信息部 + 保密办)</span></h3>
+    <p>恳请明确院里<b>大模型统一采购/自建政策</b>,以及设计数据<b>出域/本地化</b>的保密结论——这决定智能体层最终部署形态,项目组好一次性把架构落地。</p></div>
+  <div class="ask rv"><h3><span class="no">3</span>研发工时保障 <span style="font-size:13px;color:var(--ink3);font-weight:400;">(部门 + 院里)</span></h3>
+    <p>恳请在排产上给予支持:如<b>每周固定 1 个研发日</b>,或 12 月安排<b>一段集中开发窗口</b>,保障收尾阶段冲刺。</p></div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>18 / 20</span></div>
+</section>
+
+<!-- ========== 19 下一步计划 ========== -->
+<section class="slide">
+  <div class="kicker rv">PART 04 · 下一步计划与请求</div>
+  <h2 class="title rv">下一步计划(2026.11 — 12)</h2>
+  <div class="cards2 rv">
+    <div class="card"><h3><span class="ico">&#128197;</span>11 月</h3><ul>
+      <li>公路盾构荷载取值到位后,补齐 12-C 管片结构计算</li><li>侧压力升级多层土分层计算</li>
+      <li>规范条文库持续扩容(目标 50+ 条)</li><li>启动软件著作权申请材料</li></ul></div>
+    <div class="card"><h3><span class="ico">&#127919;</span>12 月</h3><ul>
+      <li>12 模块全量联调与回归测试</li><li>立项材料回填、汇总表答复</li>
+      <li>八项考核目标逐项对表销号</li><li>成果移交院内试用、收集反馈</li></ul></div>
+  </div>
+  <div class="card rv" style="margin-top:16px;"><h3><span class="ico">&#128230;</span>最终交付物</h3>
+    <p><span class="hl">单文件智能计算工具(12 模块)</span> · <span class="hl">规范条文库</span> · <span class="hl">标准化计算书导出</span> · AI 助手(直调计算) · 软著申请材料 · 立项/结题全套文档</p></div>
+  <div class="foot"><span>公路隧道智能计算助手研发 · 项目进度汇报</span><span>19 / 20</span></div>
+</section>
+
+<!-- ========== 20 结束 ========== -->
+<section class="slide end">
+  <div class="deco" style="position:absolute;inset:0;overflow:hidden;">
+    <div style="position:absolute;width:820px;height:820px;border-radius:50%;border:1px solid rgba(147,197,253,.18);left:-300px;top:-300px;"></div>
+    <div style="position:absolute;width:520px;height:520px;border-radius:50%;border:1px solid rgba(255,107,53,.25);right:-160px;bottom:-200px;"></div>
+  </div>
+  <div class="inner">
+    <h1 class="rv">恳请各位领导批评指正</h1>
+    <p class="rv">工具已经立起来、算得准了<br>现在卡住我们的不是技术,而是经费口径与研发时间<br>恳请院里对三项请求给予支持</p>
+    <div class="slogan rv">公路隧道智能计算助手 · 让设计回归创造</div>
+    <p class="rv" style="margin-top:40px;font-size:15px;color:#93c5fd;">汇报人:黄聪 · 交通市政四分院 · 2026 年 11 月</p>
+  </div>
+</section>
+
+</div></div>
+
+<!-- HUD -->
+<div id="progress"></div>
+<div id="helpTip">&#8592;/&#8594; 翻页 &middot; 空格下一页 &middot; N 口播备注 &middot; F 全屏</div>
+<div id="hud">
+  <button id="btnPrev" title="上一页">&#8249;</button>
+  <span id="counter">1 / 20</span>
+  <button id="btnNext" title="下一页">&#8250;</button>
+</div>
+
+<!-- 口播备注面板 -->
+<div id="notes"><div class="nt" id="notesTitle"></div><div class="nx" id="notesText"></div></div>
+
+<script>
+const NOTES = [
+/* 1 */ "各位领导、各位同事,大家好。我是交通市政四分院的黄聪。下面由我代表项目组,汇报院AI科研项目“公路隧道智能计算助手研发“的进展情况。汇报一共四个部分,大约二十多分钟。前面两部分向各位领导展示目前做出来的东西,后面两部分,想重点说明当前遇到的问题和困难——特别是经费使用口径和研发时间两件事,恳请院里给予支持。",
+/* 2 */ "先说汇报框架,四个部分:第一部分,简要回顾项目概况和总体架构;第二部分是重点,汇报研发进度和已经形成的七项成果,会有具体的演示和校核数据;第三部分,如实汇报存在的问题和两条主要困难;第四部分,下一步计划和需要向院里请求支持的三项事项。",
+/* 3 */ "先简要回顾立项情况。本项目是院里今年AI科研立项的第八项,由交通市政四分院申报,属于设计工具技术域,总经费119.928万元,周期从今年6月到12月,分五个阶段。项目组一共四位:我、周煜程、高恩全和沈旭东,合计280个工日——需要说明的是,我们四个人都是全职承担生产任务、兼职做研发,这一点后面讲困难的时候还会提到。项目要做的事情,一句话概括:面向公路隧道设计,把规范条文结构化入库,用大模型做规范问答,用参数驱动的方式自动完成各专业计算,做一个会算、会查、会答的智能计算工具。",
+/* 4 */ "这是总体架构,自下而上四层。最底下是知识库层,把规范条文结构化存储;往上是计算引擎层,就是12个计算模块,每个公式都有规范出处;再往上通过MCP服务层,把计算能力和条文检索封装成标准接口,和上层解耦;最上面是智能体层,设计师用自然语言对话,就能调用计算和检索。这套架构对应立项书的四大研究主题,评审时得到了认可,目前的开发就是严格按这个架构落地的。",
+/* 5 */ "用一条时间轴看总体进度。6月立项启动;7到8月完成资料收集和申报大纲改写——按评审意见,把明挖和盾构从后期拓展调整为本期必做,12个模块全部纳入考核;9到10月,把初代原型的10个山岭、边坡模块全部梳理跑通;10月下旬到11月,也就是最近三周,补齐了明挖和盾构两个新模块,形成V2.0,又完成了一轮界面和功能优化,形成现在的V2.1。总体判断:按立项计划正常推进,阶段三比计划提前了约一个月启动。目前已经11月,周期还剩最后六周。",
+/* 6 */ "第一项成果,是工具本体。现在这是一个单文件的网页工具,双击就能用,不装软件、不连网络,拷到任何电脑甚至手机上都能跑,非常适合院内分发。左边是导航,12个模块分四组:山岭隧道八个,从围岩分级到辅助通道;边坡与排水两个;再加上本期新做的明挖隧道和盾构隧道。右边这两个橙色标注的,就是这次重点汇报的新模块。",
+/* 7 */ "明挖隧道围护与主体结构计算,拆成四个子模块。11-A支护选型:输入基坑深度和土质,自动判定基坑等级,推荐围护形式、支撑道数和嵌固深度,选型库来自依托工程十个标准断面的工程类比。11-B侧压力:朗肯主动、被动、静止土压力,水土分算合算自由切换,内置了依托工程九个土层的参数库,选一下土层,重度、粘聚力、内摩擦角自动回填。11-C稳定性验算,一次算六项:墙底抗隆起、抗倾覆、整体稳定——整体稳定是圆弧条分法加滑弧自动搜索——加上抗渗流、抗承压水、嵌固构造,每项都有安全系数和规范限值的红绿判定,不满足会直接报警。11-D构件计算,七种构件全覆盖:地连墙配筋、冠梁围檩、混凝土支撑、钢支撑、焊缝,主体板墙配筋带裂缝宽度迭代,还有结构抗浮。",
+/* 8 */ "盾构模块分三块。12-A管片排版已经开放:输入管片外径、环宽、分块数、曲线半径,自动算分块角度、楔形量、错缝角,配了双环错缝示意图;而且按地铁设计规范做了符合性校核——环宽、厚度比、分块数、抗渗等级逐项对照,规范条文我们是逐字核对过原文的。12-B工作井,计算方法和明挖基坑完全一致,做了参数预设和一键跳转。12-C主体结构,需要如实说明:公路盾构的荷载取值口径还没拿到,我们只搭了框架、没有编公式——工程软件的底线是宁缺毋滥,这块等资料到位再补,答辩时也经得起追问。",
+/* 9 */ "工程软件,算得对不对是生命线。我们用依托工程鲁家峙隧道的施工图计算书做了系统性校核:左边这张表,冠梁弯矩11214比11214,支撑轴力3665比3665,焊缝应力、抗浮系数完全一致;钢支撑长细比、地墙配筋面积偏差在百分之一以内;墙底抗隆起系数偏差百分之一点五——这是简化模型和电算的正常差异,页面里有注明。另外,十个标准断面的支护选型回归,从22.9米深的工作井到3米浅的放坡段,和实际设计全部吻合;模块里引用的基坑规程条文号,用现行版正文逐条核对过,承载力系数也对过土力学教科书文献值。这一页想向各位领导说明:我们的每一个公式都有出处,每一个数字都对得起计算书。",
+/* 10 */ "十一月这轮优化,重点解决可用性。原来顶部标签页排到十二个,小屏幕上后面的模块直接点不到——这是实际使用中发现的问题;现在改成左侧分组侧边栏,任何屏幕上十二个模块全部可见、全部可点,手机上也能正常用。第二个是导出:任何一个模块算完,点一下导出按钮,就生成一份带输入参数、计算过程和图形的完整计算书,可以直接打印归档——这对应立项书考核目标里的“自动生成标准化计算书“。界面上也做了一轮整体质感提升,修复了几个原型遗留的显示问题。",
+/* 11 */ "这一项对应立项书里“AI问答式规范检索“的落点。我们把工具里所有计算依据做成了可点击的条文库,目前收录26条:基坑规程二十一条,地铁规范的盾构衬砌构造,混凝土规范的裂缝公式,公路隧道规范的围岩分级和荷载公式。设计师看到任何一个计算结果,点开下面的依据行,规范编号、条款号、条文原文直接弹出来。设想一下答辩场景:评委问“你这个数依据是什么“,我们当场点开条文给他看。后续条文库会按模块引用持续扩容,并支撑向量检索。",
+/* 12 */ "AI助手这块,这次升级做到了“直调计算“。以前问“四级围岩埋深20米荷载多少“,助手只会说请去某模块查询;现在它实时调用计算函数,直接给出深埋浅埋判定和具体数值,比如垂直均布荷载110.16千牛每平米。问“基坑深度15米怎么选型“,直接出等级、围护形式和嵌固深度,还会自动切换到对应模块。没有配置API密钥的时候,自动降级到内置规则引擎,内网环境也能用。这里要特别说明:当前AI对话用的是外部API,只做功能验证,没有接入任何院内工程数据——正式部署形态取决于院里的算力和保密口径,这正是我后面要请求的事项。",
+/* 13 */ "对照立项书的阶段计划做个小结:阶段一资料与大纲,完成;阶段二十个山岭边坡模块,完成;阶段三明挖加盾构,完成度大约85%,缺的15%就是盾构主体结构,等荷载口径;阶段四联调优化,进行中。考核目标八项里,12个模块上线、规范检索、计算书导出这些核心项已经基本达成,其余按计划12月销号。质量上,52项单元测试加34项端到端测试纳入每次发版,目前控制台零错误。",
+/* 14 */ "下面如实汇报问题。第一类是技术资料缺口:一是公路盾构的荷载取值,现在只能参考地铁规范口径,公路系统自己的标准还没拿到,建议通过院里渠道获取,这是12-C最后一块空白;二是第二依托工程甬金衢上的隧道段资料,用来做交叉验证;三是地方规程正式出版文本的最终校对,目前条文号已核对一致,原文以提取版为准。这些缺口都不阻塞主线,资料到位即可插入。",
+/* 15 */ "第二类是立项材料的挂起事项:汇总表P列的答复,取决于经费、算力、保密三个政策问题,项目组单方面闭环不了;另外院里是否安排立项汇报环节、有没有统一PPT模板,也请科技管理部明确——如果有,我们随时可以讲,今天这份材料就能扩展。附表A的工日数字和正文有出入,已确认以正文为准,待正式修正。",
+/* 16 */ "接下来是两条主要困难,第一是经费。向各位领导如实汇报:立项至今,120万经费我们一分钱没有动用。不是不需要花,而是不敢花、不会花——最关键的两笔支出,政策口径不明确。第一,购买AI大模型的API,属于云服务订阅,能不能在科研经费里列支?走哪个科目?第二,如果走本地部署,买服务器、GPU这类设备,能不能购置?怎么入账?目前预算里能对得上的,只有出版文献信息传播知识产权科目下的软件购置费8万元,和其他费用5万元,加起来13万。而智能体这一层要真正跑起来,靠免费额度和个人时间是不持续的。这件事还直接影响技术路线:云端API、院内代理、本地部署,三选一,年底前必须定,否则影响考核目标。而且它和保密是一件事——如果设计数据不能出域,就必须本地部署或院内代理。所以经费口径、算力政策、保密结论,三件事实际是一件事。",
+/* 17 */ "第二条困难是时间。四分院今年的生产任务很重,项目组四位成员都是全职承担生产、兼职研发,280个工日摊到七个月,人均每周不足一个研发日,实际操作中还经常被紧急生产任务打断,只能用晚上和周末的碎片时间推进——目前已有的这些成果,基本都是这么挤出来的。但接下来到12月,还有盾构结构计算、多层土升级、全模块联调、软著材料这些硬任务,集中在最后六周,纯靠挤时间,风险比较高。我们不是叫苦,是想说:成果证明这个团队愿意干、能干成,现在需要的是把碎片时间变成整块时间。",
+/* 18 */ "归纳成三项请求。第一,请财务部会同信息部,明确AI API云服务采购和本地部署设备的经费列支口径,如果需要调整预算结构,项目组全力配合走程序——目前120万零支出,就卡在这里。第二,请信息部明确院里大模型的采购或自建政策,以及设计数据出域的保密结论,这决定智能体层最终的部署形态。第三,请在工时上给保障,比如每周固定一个研发日,或者12月安排一段集中开发窗口。前两项,其实去一次就能问齐,不占用各部门太多时间。",
+/* 19 */ "下一步安排。11月:公路盾构荷载取值到位后,补齐12-C管片结构计算;侧压力升级多层土;条文库扩容到50条以上;启动软著申请材料。12月:12个模块全量联调,立项材料回填,八项考核目标逐项对表销号,成果移交院内试用。最终交付物:单文件智能计算工具、规范条文库、标准化计算书导出、AI助手,加上软著申请材料和全套立项结题文档。只要经费口径和时间两件事有着落,我们有信心按期、高质量完成全部考核目标。",
+/* 20 */ "我的汇报就到这里。总结一句话:工具已经立起来了、算得准了,规范依据随时点得开,现在卡住我们的不是技术,是经费口径和研发时间这两件需要院里拍板的事。恳请各位领导批评指正,也恳请对刚才的三项请求给予支持。谢谢大家!"
+];
+
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+let cur = 0;
+
+function show(i) {
+  if (i < 0) i = 0; if (i > total - 1) i = total - 1;
+  slides[cur].classList.remove('active');
+  cur = i;
+  slides[cur].classList.add('active');
+  document.getElementById('counter').textContent = (cur + 1) + ' / ' + total;
+  document.getElementById('progress').style.width = ((cur + 1) / total * 100) + '%';
+  document.getElementById('notesTitle').textContent = '第 ' + (cur + 1) + ' 页 口播备注(按 N 收起)';
+  document.getElementById('notesText').textContent = NOTES[cur] || '';
+}
+document.getElementById('btnPrev').onclick = () => show(cur - 1);
+document.getElementById('btnNext').onclick = () => show(cur + 1);
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); show(cur + 1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); show(cur - 1); }
+  else if (e.key === 'Home') show(0);
+  else if (e.key === 'End') show(total - 1);
+  else if (e.key === 'n' || e.key === 'N') document.getElementById('notes').classList.toggle('show');
+  else if (e.key === 'f' || e.key === 'F') {
+    if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen();
+  }
+});
+function fit() {
+  const s = Math.min(window.innerWidth / 1280, window.innerHeight / 720) * 0.985;
+  document.getElementById('stage').style.transform = 'scale(' + s + ')';
+}
+window.addEventListener('resize', fit);
+fit();
+show(0);
+</script>
+</body>
+</html>
